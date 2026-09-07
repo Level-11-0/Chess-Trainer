@@ -13,11 +13,21 @@ function tickBottom(pawns: number): string {
   return `${50 + (pawns / 4) * 46}%`;
 }
 
-export function EvalBar({ evaluation }: { evaluation: Evaluation | null }) {
+export function EvalBar({
+  evaluation,
+  height,
+}: {
+  evaluation: Evaluation | null;
+  height?: number;
+}) {
   const percent = evalBarPercent(evaluation);
   const label = evalLabel(evaluation);
   return (
-    <div className="eval-bar" title={`Evaluation ${label}`}>
+    <div
+      className="eval-bar"
+      title={`Evaluation ${label}`}
+      style={height ? { height, minHeight: height } : undefined}
+    >
       <div className="eval-white" style={{ height: `${percent}%` }} />
       {TICKS.map((tick) => (
         <span

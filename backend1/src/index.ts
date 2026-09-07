@@ -43,7 +43,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:5174",
+      "http://127.0.0.1:5174",
+    ],
     credentials: true,
   }),
 );
@@ -88,6 +93,15 @@ async function requireAdmin(
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, engine: "stockfish" });
 });
+
+function goneGames(_req: Request, res: Response): void {
+  res.status(410).json({
+    error: "Play vs bot was removed. Use the trainer instead.",
+  });
+}
+
+app.all("/api/games", goneGames);
+app.all("/api/games/*path", goneGames);
 
 app.post("/api/auth/register", async (req, res, next) => {
   try {

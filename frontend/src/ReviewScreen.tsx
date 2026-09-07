@@ -10,7 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { Chessboard } from "react-chessboard";
-import { createReview, getReview, listReviews } from "./api";
+import {
+  REVIEW_API_MESSAGE,
+  createReview,
+  getReview,
+  listReviews,
+  usesOfflineBook,
+} from "./api";
 import { AnnotatedSquare } from "./AnnotatedSquare";
 import { EvalBar } from "./EvalBar";
 import {
@@ -251,6 +257,9 @@ export function ReviewScreen({
             ? " Guest analysis stays in this session and is not saved to an account."
             : ""}
         </p>
+        {usesOfflineBook() ? (
+          <p className="error">{REVIEW_API_MESSAGE}</p>
+        ) : null}
         <label className="field">
           <span>PGN file</span>
           <input
@@ -273,7 +282,7 @@ export function ReviewScreen({
           type="button"
           className="primary"
           onClick={() => void onUploadReview()}
-          disabled={busy || pgn.trim().length < 10}
+          disabled={busy || usesOfflineBook() || pgn.trim().length < 10}
         >
           {busy ? "Uploading…" : "Review game"}
         </button>
@@ -308,7 +317,7 @@ export function ReviewScreen({
     <main className="play-layout">
       <section className="board-column">
         <div className="eval-and-board">
-          <EvalBar evaluation={evaluation} />
+          <EvalBar evaluation={evaluation} height={width} />
           <div ref={ref} className="board-wrap">
             <Chessboard
               position={fen}

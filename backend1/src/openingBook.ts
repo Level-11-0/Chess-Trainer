@@ -2,7 +2,7 @@ import { Chess, type PieceSymbol, type Square } from "chess.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { DATA_DIR } from "./paths.js";
+import { DATA_DIR, SEED_BOOK_PATH } from "./paths.js";
 import {
   MAX_BOOK_PLIES,
   type BookMove,
@@ -86,20 +86,37 @@ function splitPgnGames(pgn: string): string[] {
     .filter((game) => game.length > 0);
 }
 
+function isEmptyBook(value: StoredBook): boolean {
+  return (
+    value.sources.length === 0 && Object.keys(value.positions).length === 0
+  );
+}
+
+async function readStoredBook(path: string): Promise<StoredBook | null> {
+  try {
+    const raw = await readFile(path, "utf8");
+    const parsed = JSON.parse(raw) as StoredBook;
+    return {
+      positions: parsed.positions ?? {},
+      sources: parsed.sources ?? [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function ensureLoaded(): Promise<void> {
   if (loaded) {
     return;
   }
   loaded = true;
-  try {
-    const raw = await readFile(BOOK_PATH, "utf8");
-    const parsed = JSON.parse(raw) as StoredBook;
-    book = {
-      positions: parsed.positions ?? {},
-      sources: parsed.sources ?? [],
-    };
-  } catch {
-    book = { positions: {}, sources: [] };
+  book = (await readStoredBook(BOOK_PATH)) ?? { positions: {}, sources: [] };
+  if (isEmptyBook(book)) {
+    const seed = await readStoredBook(SEED_BOOK_PATH);
+    if (seed && !isEmptyBook(seed)) {
+      book = seed;
+      await persist();
+    }
   }
 }
 
@@ -328,7 +345,12 @@ export async function tryTrainerMove(input: {
   preferredOpening?: string;
 }): Promise<TrainerTryResult> {
   await ensureLoaded();
-  const chess = new Chess(input.fen);
+  let chess: Chess;
+  try {
+    chess = new Chess(input.fen);
+  } catch {
+    throw httpError("Invalid position", 400);
+  }
   let played;
   try {
     played = chess.move({

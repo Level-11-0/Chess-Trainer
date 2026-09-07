@@ -6,9 +6,19 @@ export type AppRoute =
   | { name: "studies" }
   | { name: "book" };
 
+function hashParts(hash: string): string[] {
+  const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  const base = String(import.meta.env.BASE_URL ?? "")
+    .split("/")
+    .filter(Boolean)[0];
+  if (base && parts[0] === base) {
+    parts.shift();
+  }
+  return parts;
+}
+
 export function parseHash(hash: string): AppRoute {
-  const path = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-  const [first, second] = path;
+  const [first, second] = hashParts(hash);
   if (first === "auth") {
     return { name: "auth" };
   }
@@ -45,5 +55,8 @@ export function toHash(route: AppRoute): string {
 }
 
 export function navigate(route: AppRoute): void {
-  window.location.hash = toHash(route);
+  const next = toHash(route);
+  if (window.location.hash !== next) {
+    window.location.hash = next;
+  }
 }
