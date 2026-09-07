@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  base: '/Chess-Trainer/', 
   server: {
     proxy: {
       "/api": "http://localhost:3001",

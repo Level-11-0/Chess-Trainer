@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# Already-tracked install tree; keep GitHub language stats on app source
+backend1/node_modules/** linguist-vendored
