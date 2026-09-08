@@ -52,6 +52,14 @@ def test_parse_pgn_errors():
         parse_pgn("x" * 300_000)
 
 
+def test_placeholder_headers_fall_back():
+    from chesslab.review import _header
+    game = parse_pgn('[Date "????.??.??"]\n[White "?"]\n[Black "Bob"]\n\n1. e4 e5 *')[1]
+    assert _header(game, "Date", "") == ""
+    assert _header(game, "White", "White") == "White"
+    assert _header(game, "Black", "Black") == "Bob"
+
+
 def test_review_id_is_stable():
     assert review_id(SHORT_GAME) == review_id("  " + SHORT_GAME + "\n")
     assert len(review_id(SHORT_GAME)) == 12

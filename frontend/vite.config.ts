@@ -6,7 +6,8 @@ import tailwindcss from "@tailwindcss/vite";
 // BASE_URL=/<repo>/ so forks work without editing this file; local dev uses /.
 const pagesBase = "/Chess-Trainer/";
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, isPreview }) => ({
   plugins: [react(), tailwindcss()],
-  base: process.env.BASE_URL || (command === "build" ? pagesBase : "/"),
+  // build + preview share the Pages base so `npm run preview` serves what Pages will
+  base: process.env.BASE_URL || (command === "build" || isPreview ? pagesBase : "/"),
 }));

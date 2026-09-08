@@ -43,26 +43,69 @@ Reviews are public (they live in the repository). You can also run **Review game
 
 ## Run locally
 
-Frontend (Node.js 22):
+Requirements: Node.js 22, Python 3.10+, and Stockfish (only for game reviews and the engine tests).
+
+macOS (Homebrew):
+
+```bash
+brew install node@22 stockfish
+```
+
+Ubuntu / Debian:
+
+```bash
+sudo apt-get install -y stockfish
+```
+
+Frontend:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev        # http://localhost:5173/
-npm run build      # typecheck + production build
+npm run build      # typecheck + production build (uses base /Chess-Trainer/)
+npm run preview    # serve the build at http://localhost:4173/Chess-Trainer/
 npm run lint       # oxlint
 ```
 
-Backend (Python 3.10+, Stockfish on `PATH` or `STOCKFISH_PATH`):
+Backend, in a virtual environment (Homebrew and Debian Pythons refuse `pip install` outside one):
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e "backend[dev]"
 python -m chesslab.cli build-book                       # book/*.pgn -> frontend/public/book.json
 python -m chesslab.cli review-game --pgn-file game.pgn  # -> frontend/public/reviews/<id>.json
-pytest backend
 ```
 
-`build-book --check` fails if `book.json` is stale; CI runs it on every PR.
+Stockfish is found on `PATH`, or set `STOCKFISH_PATH=/path/to/stockfish`.
+
+## Testing
+
+### Locally (what CI runs)
+
+```bash
+source .venv/bin/activate
+python -m chesslab.cli build-book --check   # fails if book.json is stale
+pytest -q backend                           # engine tests skip when Stockfish is missing
+cd frontend && npm run lint && npm run build
+```
+
+To try a review end to end without GitHub, run the analysis into a scratch folder and load the JSON on the Review page (**Review JSON** file input):
+
+```bash
+python -m chesslab.cli review-game --pgn-file game.pgn --id local-1 --out-dir /tmp/reviews --depth 12
+```
+
+Or drop the output into `frontend/dist/reviews/` after `npm run build` and open `npm run preview` at `/Chess-Trainer/#/review/local-1`.
+
+### On GitHub
+
+1. **Pull request** → the **CI** workflow runs pytest, the book freshness check, frontend lint + build, and gitleaks. Nothing deploys.
+2. **Merge to `main`** → **Deploy to GitHub Pages** publishes the site. **Build opening book** runs too if `book/` changed.
+3. **Review a game** → open a *Game review* issue (or use the site's **Request review on GitHub** button). Within a few minutes the **Review game** workflow comments a summary, closes the issue, and Pages redeploys with the review at `#/review/issue-<n>`. You can also start it from the Actions tab with **Run workflow** and a pasted PGN; that result lands at `#/review/run-<run id>`.
+
+If a workflow fails, the Actions tab has the log; a failed review also leaves a comment on the issue and can be retried by editing the issue.
 
 ## GitHub setup (once)
 

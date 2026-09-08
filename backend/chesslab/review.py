@@ -32,8 +32,9 @@ class ReviewError(ValueError):
 
 
 def _header(game: chess.pgn.Game, key: str, fallback: str) -> str:
-    value = game.headers.get(key, "")
-    return value if value and value != "?" else fallback
+    """Header value, or `fallback` when missing or a PGN placeholder ("?", "????.??.??")."""
+    value = game.headers.get(key, "").strip()
+    return value if value and set(value) - set("?.") else fallback
 
 
 def parse_pgn(pgn: str) -> tuple[str, chess.pgn.Game]:
